@@ -154,7 +154,14 @@ def GetMessages(Uid):
 
 # 搜索用户
 def searchUser():
-    pass
+    name = request.args.get("name")
+    userI = User.User()
+    users = userI.SearchUser(name)
+    print("搜索结果：",users)
+    myid = session["id"]
+    sex = userI.GetSex(myid)
+    own = {"name": session["username"], "sex": sex, "id": myid}
+    return render_template("index.html",own=own,friends=users,msg=[], currentFriend={})
 
 
 # 添加用户为好友

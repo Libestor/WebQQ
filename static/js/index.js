@@ -27,3 +27,11 @@ function openDeleteDialog() {
 function closeDeleteDialog() {
   document.getElementById('deleteFriendModal').style.display = 'none';
 }
+
+function SearchUser(){
+    // console.log("hello")
+    // 获取输入框中的值
+    var inputValue = document.getElementById("searchInput").value;
+    // console.log(inputValue)
+  window.location.href = "/searchUser?name="+inputValue; // 使用相对路径
+}

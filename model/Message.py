@@ -84,7 +84,7 @@ class Message:
         if res != 0:
             # 消息格式化
             allmessage = cursor.fetchall()
-            print("所有消息：",allmessage)
+            # print("所有消息：",allmessage)
             msg = []
             for message in allmessage:
                 tmp = {}

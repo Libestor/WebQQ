@@ -24,11 +24,14 @@ class User:
         self.RegisterLoginSql = "INSERT INTO `login`(`username`, `password`) VALUES (%s, %s)"
         self.CheckRegisterVaildSql = "SELECT * FROM user WHERE `username`=%s"
         self.CheckUserSql = "SELECT * FROM `user` WHERE `id`=%s"
-        self.CheckFriendSql = "SELECT * FROM `relation` WHERE (`user1`=%s AND `user2`=%s) OR (`user2`=%s AND `user1`=%s)"
+        self.getSexSql = "SELECT sex FROM user WHERE id=%s"
+        self.CheckFriendSql = "SELECT * FROM `relation` WHERE (`user1`=%s AND `user2`=%s) OR (`user2`=%s AND " \
+                              "`user1`=%s)"
         self.AddUserSql = "INSERT INTO `relation`(`user1`, `user2`) VALUES(%s,%s)"
         self.DeleteUserSql = "DELETE FROM `relation` WHERE (`user1` = %s AND user2 = %s )OR (`user2` = %s AND `user1` = %s);"
         self.GetFriendsSql = "SELECT id,username,sex FROM `user` WHERE `id` IN (SELECT user1 FROM `relation` WHERE `user2`=%s UNION " \
                              "SELECT user2 FROM `relation` WHERE `user1`=%s)"
+        self.SearchUserSql = "SELECT id,username,sex FROM `user` WHERE username LIKE %s"
 
     def __del__(self):
         self.db.close()
@@ -40,6 +43,13 @@ class User:
             return False
         id = cursor.fetchone()[0]
         return id
+
+    def GetSex(self, idnum):
+        cursor = self.db.cursor()
+        cursor.execute(self.getSexSql, (idnum,))
+        sex = cursor.fetchone()
+        cursor.close()
+        return sex[0]
 
     def is_connected(self):
         """Check if the server is alive"""
@@ -54,6 +64,7 @@ class User:
                 database=config.DataBase.get("database")
             )
 
+    # 返回True就表示可以正常使用
     def sqlInject(self, s: str):
         if '\'' in s or '\"' in s:
             return False
@@ -121,8 +132,21 @@ class User:
 
     # 按照名字查询
     def SearchUser(self, username: str):
-        userid = self.getUid(username)
-
+        # 确保sql特殊字符过滤成功
+        if self.sqlInject(username):
+            cursor = self.db.cursor()
+            res = cursor.execute(self.SearchUserSql, (username+"%",))
+            print("搜索好友查询数量: ",res)
+            friends = []
+            if res != 0:
+                allUser = cursor.fetchall()
+                for user in allUser:
+                    friends.append({"name": user[1], 'id': user[0], "sex": user[2]})
+                return friends
+            else:
+                return []
+        else:
+            return []
     # 查询是否存在用户
     def CheckUser(self, uid):
         curcor = self.db.cursor()
@@ -143,7 +167,7 @@ class User:
             return False
 
     def DeleteUser(self, uid1, uid2):
-        if self.CheckFriend(uid1,uid2):
+        if self.CheckFriend(uid1, uid2):
             cursor = self.db.cursor()
             cursor.execute(self.DeleteUserSql, (uid1, uid2, uid1, uid2))
             self.db.commit()
@@ -171,4 +195,3 @@ class User:
 
 if __name__ == "__main__":
     mysql = User()
-

@@ -5,8 +5,7 @@ import hashlib
 
 app = Flask(__name__)
 
-# 定义静态文件位置
-# url_for("static")
+
 random_key = hashlib.md5()
 random_key.update(str(random.random()).encode('utf-8'))
 app.secret_key = random_key.hexdigest()
@@ -82,9 +81,8 @@ def logout():
 # 搜索用户逻辑
 @app.route('/searchUser')
 def searchUser():
-    # return route
-    pass
-
+    # 通过名字搜索
+    return route.searchUser()
 
 # 添加用户逻辑
 @app.route('/addUser',methods=["POST"],endpoint="addUser")
