@@ -18,20 +18,26 @@ class User:
         )
 
         # 添加数据的sql语句
-        self.getUidSql = "SELECT id FROM `user` WHERE username=%s"
-        self.LoginSql = "SELECT * FROM login WHERE `username`=%s AND `password`=%s"
-        self.RegisterUserSql = "INSERT INTO `user`(`username`, `sex`,`email`) VALUES (%s, %s,%s)"
-        self.RegisterLoginSql = "INSERT INTO `login`(`username`, `password`) VALUES (%s, %s)"
-        self.CheckRegisterVaildSql = "SELECT * FROM user WHERE `username`=%s"
+        self.getUsernameSql = "SELECT username FROM `user` WHERE id=%s"
+        self.getUidSql = "SELECT id FROM `user` WHERE username='%s'"
+        self.LoginSql = "SELECT * FROM login WHERE `username`='%s' AND `password`='%s'"
+        self.RegisterUserSql = "INSERT INTO `user`(`username`, `sex`,`email`) VALUES ('%s', '%s','%s')"
+        self.RegisterLoginSql = "INSERT INTO `login`(`username`, `password`) VALUES ('%s', '%s')"
+        self.CheckRegisterVaildSql = "SELECT * FROM user WHERE `username`='%s'"
         self.CheckUserSql = "SELECT * FROM `user` WHERE `id`=%s"
         self.getSexSql = "SELECT sex FROM user WHERE id=%s"
-        self.CheckFriendSql = "SELECT * FROM `relation` WHERE (`user1`=%s AND `user2`=%s) OR (`user2`=%s AND " \
-                              "`user1`=%s)"
-        self.AddUserSql = "INSERT INTO `relation`(`user1`, `user2`) VALUES(%s,%s)"
-        self.DeleteUserSql = "DELETE FROM `relation` WHERE (`user1` = %s AND user2 = %s )OR (`user2` = %s AND `user1` = %s);"
-        self.GetFriendsSql = "SELECT id,username,sex FROM `user` WHERE `id` IN (SELECT user1 FROM `relation` WHERE `user2`=%s UNION " \
-                             "SELECT user2 FROM `relation` WHERE `user1`=%s)"
-        self.SearchUserSql = "SELECT id,username,sex FROM `user` WHERE username LIKE %s"
+        self.CheckFriendSql = "SELECT * FROM `relation` WHERE (`user1`='%s' AND `user2`='%s') OR (`user2`='%s' AND " \
+                              "`user1`='%s')"
+        self.AddUserSql = "INSERT INTO `relation`(`user1`, `user2`) VALUES('%s','%s')"
+        self.DeleteUserSql = "DELETE FROM `relation` WHERE (`user1` = '%s' AND user2 = '%s' )OR (`user2` = '%s' AND `user1` = '%s');"
+        self.GetFriendsSql = "SELECT id,username,sex FROM `user` WHERE `id` IN (SELECT user1 FROM `relation` WHERE `user2`='%s' UNION " \
+                             "SELECT user2 FROM `relation` WHERE `user1`='%s')"
+        self.SearchUserSql = "SELECT id,username,sex FROM `user` WHERE username LIKE '%s'"
+        self.CheckUsernameSql = "SELECT * FROM `user` WHERE username='%s'"
+        self.UpdateUsernameSql = "UPDATE `user` SET username = '%s' WHERE id = %s"
+        self.UpdateSexSql = "UPDATE `user` SET sex = %s WHERE id = %s"
+        self.UpdateLoginUsernameSql = "UPDATE `login` SET username = '%s' WHERE username = '%s'"
+        self.UpdatePasswordSql = "UPDATE `login` SET `password` = '%s' WHERE username = '%s'"
 
     def __del__(self):
         self.db.close()
@@ -44,7 +50,7 @@ class User:
         id = cursor.fetchone()[0]
         return id
 
-    def GetSex(self, idnum):
+    def GetSex(self, idnum:int):
         cursor = self.db.cursor()
         cursor.execute(self.getSexSql, (idnum,))
         sex = cursor.fetchone()
@@ -72,7 +78,7 @@ class User:
             return True
 
     # 密码的hash计算
-    def GetpassMd5(self, passwd):
+    def getpassMd5(self, passwd):
         passMd5 = hashlib.md5()
         passMd5.update(passwd.encode("utf-8"))
         return passMd5.hexdigest()
@@ -85,7 +91,7 @@ class User:
             cursor = self.db.cursor()
             cursor.execute(self.RegisterUserSql, (username, sex, email))
             # 在登录表中加入数据
-            passMd5 = self.GetpassMd5(password)
+            passMd5 = self.getpassMd5(password)
             cursor.execute(self.RegisterLoginSql, (username, passMd5))
 
             self.db.commit()
@@ -107,7 +113,7 @@ class User:
             return False
 
     def CheckLogin(self, username, passwd):
-        passMd5 = self.GetpassMd5(passwd)
+        passMd5 = self.getpassMd5(passwd)
         # 进行sql关键字过滤：
         if self.sqlInject(username):
             # 进行预编译：
@@ -135,11 +141,12 @@ class User:
         # 确保sql特殊字符过滤成功
         if self.sqlInject(username):
             cursor = self.db.cursor()
-            res = cursor.execute(self.SearchUserSql, (username+"%",))
-            print("搜索好友查询数量: ",res)
+            res = cursor.execute(self.SearchUserSql, (username + "%",))
+            print("搜索好友查询数量: ", res)
             friends = []
             if res != 0:
                 allUser = cursor.fetchall()
+                cursor.close()
                 for user in allUser:
                     friends.append({"name": user[1], 'id': user[0], "sex": user[2]})
                 return friends
@@ -147,10 +154,12 @@ class User:
                 return []
         else:
             return []
+
     # 查询是否存在用户
-    def CheckUser(self, uid):
-        curcor = self.db.cursor()
-        res = curcor.execute(self.CheckUserSql, (uid,))
+    def CheckUser(self, uid:int):
+        cursor = self.db.cursor()
+        res = cursor.execute(self.CheckUserSql, (uid,))
+        cursor.close()
         if res == 0:
             return False
         else:
@@ -182,6 +191,7 @@ class User:
         friends = []
         if res != 0:
             allFriend = cursor.fetchall()
+            cursor.close()
             tmp = {}
             for friend in allFriend:
                 tmp["id"] = friend[0]
@@ -191,6 +201,72 @@ class User:
         else:
             return False
         return friends
+
+    # 检测username是否存在和合法
+    def CheckUsername(self, username):
+        # sql注入检测
+        if self.sqlInject(username):
+            cursor = self.db.cursor()
+            res = cursor.execute(self.CheckUsernameSql, (username,))
+            cursor.close()
+            if res == 0:
+                # True表示检测通过，该用户名可用
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    # 修改用户名
+    def ChangeUsername(self, myid:int, username):
+        # 检查是否合法
+        if not self.CheckUsername(username):
+            return False
+        cursor = self.db.cursor()
+        # 修改总表
+        cursor.execute(self.UpdateUsernameSql,(username,myid))
+        # 修改登录表
+        oldName = self.GetUsername(myid)
+        cursor.execute(self.UpdateLoginUsernameSql,(username,oldName))
+        self.db.commit()
+        cursor.close()
+        return True
+
+
+    # 修改性别
+    def ChangeSex(self,sex:int,myid:int):
+        # 检查是否合法
+        cursor = self.db.cursor()
+        cursor.execute(self.UpdateSexSql,(sex,myid))
+        self.db.commit()
+        cursor.close()
+
+    def GetUsername(self,myid:int):
+        cursor = self.db.cursor()
+        res = cursor.execute(self.getUsernameSql,(myid,))
+        if res == 0 :
+            return False
+        name = cursor.fetchone()[0]
+        cursor.close()
+        return name
+
+    # 修改密码
+    def ChangePasswd(self,myid:int,old,new):
+        name = self.GetUsername(myid)
+        # sql检测
+        if not self.sqlInject(old) or not self.sqlInject(new):
+            return False
+        # 验证旧密码
+        if not self.CheckLogin(username=name,passwd=old):
+            return "OldFalse"
+        # 修改密码
+        username = self.GetUsername(myid)
+        passMd5 = self.getpassMd5(new)
+        cursor = self.db.cursor()
+        cursor.execute(self.UpdatePasswordSql,(passMd5,username))
+        self.db.commit()
+        cursor.close()
+        return True
 
 
 if __name__ == "__main__":

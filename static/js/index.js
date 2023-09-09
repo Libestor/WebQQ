@@ -27,7 +27,16 @@ function openDeleteDialog() {
 function closeDeleteDialog() {
   document.getElementById('deleteFriendModal').style.display = 'none';
 }
+// 修改个人信息
+function openChangeDialog() {
+  document.getElementById('ChangeInfoModal').style.display = 'block';
+}
 
+function closeChangeDialog() {
+  document.getElementById('ChangeInfoModal').style.display = 'none';
+}
+
+// 搜索信息
 function SearchUser(){
     // console.log("hello")
     // 获取输入框中的值

@@ -58,6 +58,12 @@ def index(uuid=None, other=None):
     elif other == "DeleteFalse":
         return render_template("index.html", friends=friends, own=own, msg=message, currentFriend=currentFriend,
                                DeleteSuccess=False)
+    elif other == "ChangeSuccess":
+        return render_template("index.html", friends=friends, own=own, msg=message, currentFriend=currentFriend,
+                               ChangeSuccess=False)
+    elif other == "ChangeFalse":
+        return render_template("index.html", friends=friends, own=own, msg=message, currentFriend=currentFriend,
+                               ChangeSuccess=True)
     # print(friends)
     return render_template_index(friends=friends, own=own, msg=message, currentFriend=currentFriend)
 
@@ -175,7 +181,25 @@ def addUser():
     else:
         return index(other="AddFalse")
 
+def ChangeUser():
+    username = request.form["username"]
+    sex = request.form["sex"]
+    passwd = request.form["oldPassword"]
+    newpasswd = request.form["newPassword"]
+    reNewPasswd = request.form["reNewPassword"]
+    if newpasswd !=reNewPasswd:
+        return index(other="密码不一致")
+    user = User.User()
+    res = user.ChangePasswd(myid=session["id"],old=passwd,new=newpasswd)
+    if res == "OldFalse":
+        return index(other="旧密码不正确")
+    elif res is False:
+        return index(other="changefalse")
 
+    if True:
+        return index(other="ChangeSuccess")
+    else:
+        return index(other="ChaneFalse")
 def DeleteUser():
     DelteUserId = int(request.form["Id"])
     selfId = int(session["id"])

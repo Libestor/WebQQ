@@ -22,13 +22,19 @@
     {% if DeleteSuccess == False %}
     <script> alert("删除失败") </script>
     {% endif %}
+    {% if ChangeSuccess == False %}
+    <script> alert("个人信息修改失败") </script>
+    {% endif %}
+    {% if ChangeSuccess == True %}
+    <script> alert("个人信息修改成功") </script>
+    {% endif %}
 <div class="main">
     <div class="top">
         <div class="top-left" >
             {%if own.sex ==2 %}
-            <div class="header" style="background-image: url('/static/img/head-man.png')" ></div>
+            <div class="header" onclick="openChangeDialog()" style="background-image: url('/static/img/head-man.png')" ></div>
             {% elif own.sex ==1 %}
-            <div class="header" style="background-image: url('/static/img/head-girl.png')" ></div>
+            <div class="header" onclick="openChangeDialog()" style="background-image: url('/static/img/head-girl.png')" ></div>
             {% endif %}
             <div class="search">
                 <input type="text" id="searchInput">
@@ -140,6 +146,22 @@
         <form action="/deleteUser" method="POST" class="modal-form">
           <input type="text" name="Id" placeholder="好友ID">
           <input type="submit" value="删除">
+        </form>
+      </div>
+    </div>
+{#修改用户信息#}
+    <div id="ChangeInfoModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeAddDialog()">&times;</span>
+        <h2 class="modal-h2">修改个人信息</h2>
+        <form action="/ChangeUser" method="POST" class="modal-form">
+            <h2>您的Uid为：{{ own.id }}</h2>
+            <h2>姓名：</h2><input type="text" name="username" placeholder="姓名">
+            <h2>性别：</h2><input type="text" name="sex" placeholder="性别">
+            <h2>原密码：</h2><input type="text" name="oldPassword" placeholder="原密码">
+            <h2>新密码：</h2><input type="text" name="newPassword" placeholder="新密码"><br>
+            <h2>再次输入新密码：</h2><input type="text" name="reNewPassword" placeholder="再次输入新密码"><br>
+          <input type="submit" value="修改">
         </form>
       </div>
     </div>

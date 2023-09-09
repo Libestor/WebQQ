@@ -97,6 +97,10 @@ def addUser():
 def deleteUser():
     return route.DeleteUser()
 
+@app.route('/ChangeUser',methods=["POST"],endpoint="ChangeUser")
+@login_require
+def ChangeUser():
+    pass
 
 if __name__ == '__main__':
     app.run(debug=True)
