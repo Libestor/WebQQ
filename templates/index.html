@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>WEB聊天</title>
+    <link rel="stylesheet" href="/static/css/index.css">
+    <script type="text/javascript" src="/static/js/index.js"></script>
+</head>
+<body>
+    {% if AddSuccess == True %}
+    <script> alert("添加成功") </script>
+    {% endif %}
+    {% if AddSuccess == False %}
+    <script> alert("添加失败") </script>
+    {% endif %}
+    {% if DeleteSuccess == True %}
+    <script> alert("删除成功") </script>
+    {% endif %}
+    {% if DeleteSuccess == False %}
+    <script> alert("删除失败") </script>
+    {% endif %}
+<div class="main">
+    <div class="top">
+        <div class="top-left" >
+            {%if own.sex ==2 %}
+            <div class="header" style="background-image: url('/static/img/head-man.png')" ></div>
+            {% elif own.sex ==1 %}
+            <div class="header" style="background-image: url('/static/img/head-girl.png')" ></div>
+            {% endif %}
+            <div class="search">
+                <input type="text">
+                <i class="icon-sear"></i>
+            </div>
+        </div>
+        <div class="top-type">
+            <a href="#" class="news icon-site">{{own.name}}</a>
+            <a href="#" class="friend icon-site">的聊天室</a>
+            <a href="#" class="file icon-site"></a>
+        </div>
+        <div class="top-right">
+            <i class="ic-menu ic-same"></i>
+            <i class="ic-shrink ic-same" onclick="openAddDialog()"></i>
+            <i class="ic-boost ic-same" onclick="openDeleteDialog()"></i>
+            <i class="ic-close ic-same" onclick="Logout()"></i>
+        </div>
+    </div>
+    <div class="box">
+        <div class="chat-list" >
+            {% for user in friends  %}
+                <div class="list-box" onclick="ChangeUser('{{user.id}}')">
+                {% if user.sex == 1 %}
+                    <img class="chat-head" src="/static/img/head-girl.png" alt="">
+                {% elif user.sex == 2 %}
+                    <img class="chat-head" src="/static/img/head-man.png" alt="">
+                {% endif %}
+
+                <div class="chat-rig">
+                    <p class="title">{{user.name}}</p>
+                    <p class="text">UID:{{user.id}}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="box-right">
+            <div class="recvfrom">
+                <div class="nav-top">
+                    <p>{{currentFriend.name}}</p>
+                </div>
+                <div class="news-top">
+                    <ul>
+                        {% for user in users %}
+                                {% if user.type == "self" %}
+                                   <li class="self">
+                                       {% if user.sex == 1 %}
+                                        <div class="avatar"><img src="/static/img/head-girl.png" alt=""></div>
+                                       {% elif user.sex == 2 %}
+                                       <div class="avatar"><img src="/static/img/head-man.png" alt=""></div>
+                                       {% endif %}
+                                        <div class="msg">
+                                            <p class="msg-name" >{{user.name}}</p>
+                                            <p class="msg-text">{{user.msg}}</p>
+                                            <time>{{user.time}}</time>
+                                        </div>
+                                    </li>
+                                {% elif user.type == "other" %}
+                                    <li class="other">
+                                        <div class="avatar"><img src="/static/img/head-man.png" alt=""></div>
+                                        <div class="msg">
+                                            <p class="msg-name">{{user.name}}</p>
+                                            <p class="msg-text">{{user.msg}}</p>
+                                            <time>{{user.time}}</time>
+                                        </div>
+                                    </li>
+
+                                {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <div class="sendto">
+                <div class="but-nav">
+                    <ul>
+                        <li class="font"></li>
+                        <li class="face"></li>
+                        <li class="cut"></li>
+                        <li class="page"></li>
+                        <li class="old"></li>
+                    </ul>
+                </div>
+                <div class="but-text">
+                    <form action="/msg" method="POST">
+                        <textarea name="msg" cols="110" rows="6"></textarea>
+                        <input type="text" name='receUser' value="{{currentFriend.id}}" style="display: none;">
+                        <input type="submit" class="button" value="发送">
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--用户添加界面-->
+    <div id="addFriendModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeAddDialog()">&times;</span>
+        <h2 class="modal-h2">添加好友</h2>
+        <form action="/addUser" method="POST" class="modal-form">
+          <input type="text" name="Id" placeholder="好友ID">
+          <input type="submit" value="添加">
+        </form>
+      </div>
+    </div>
+<!--用户删除界面-->
+    <div id="deleteFriendModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeDeleteDialog()">&times;</span>
+        <h2 class="modal-h2">删除好友</h2>
+        <form action="/deleteUser" method="POST" class="modal-form">
+          <input type="text" name="Id" placeholder="好友ID">
+          <input type="submit" value="删除">
+        </form>
+      </div>
+    </div>
+</body>
+</html>
