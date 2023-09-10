@@ -100,7 +100,7 @@ def deleteUser():
 @app.route('/ChangeUser',methods=["POST"],endpoint="ChangeUser")
 @login_require
 def ChangeUser():
-    pass
+    return route.ChangeUser()
 
 if __name__ == '__main__':
     app.run(debug=True)

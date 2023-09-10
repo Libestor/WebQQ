@@ -17,26 +17,26 @@ def render_template_index(own=None, friends=None, msg=None, currentFriend=None):
     return render_template("index.html", own=own, friends=friends, users=msg, currentFriend=currentFriend)
 
 
-def index(uuid=None, other=None):
+def index(uuid=None, other=None, msg=None):
     # print(uuid)
     userI = User.User()
     msgI = Message.Message()
     myid = session["id"]
     friends = userI.GetFriends(myid)
     currentFriend = {}
+    print("index:myid：", myid)
     if friends is False:
         friends = []
     if uuid is None:
         message = []
         uuid = []
     else:
-        myid = session["id"]
         message = msgI.GetMessage(myid, uuid)
         if message is False:
             message = []
         # 设置currentFriend 到uuid上
         # 需要检测当前是否是好友关系：
-        if userI.CheckFriend(myid,uuid):
+        if userI.CheckFriend(myid, uuid):
             currentFriend = {"name": msgI.GetName(uuid), "id": uuid}
         else:
             currentFriend = []
@@ -46,24 +46,13 @@ def index(uuid=None, other=None):
     # print(friends)
     # print(own)
     # print(message)
-    if other == "AddSuccess":
+
+    if other:
+        print("other is ",other)
+        print("msg is  ",msg)
         return render_template("index.html", friends=friends, own=own, msg=message, currentFriend=currentFriend,
-                               AddSuccess=True)
-    elif other == "AddFalse":
-        return render_template("index.html", friends=friends, own=own, msg=message, currentFriend=currentFriend,
-                               AddSuccess=False)
-    elif other == "DeleteSuccess":
-        return render_template("index.html", friends=friends, own=own, msg=message, currentFriend=currentFriend,
-                               DeleteSuccess=True)
-    elif other == "DeleteFalse":
-        return render_template("index.html", friends=friends, own=own, msg=message, currentFriend=currentFriend,
-                               DeleteSuccess=False)
-    elif other == "ChangeSuccess":
-        return render_template("index.html", friends=friends, own=own, msg=message, currentFriend=currentFriend,
-                               ChangeSuccess=False)
-    elif other == "ChangeFalse":
-        return render_template("index.html", friends=friends, own=own, msg=message, currentFriend=currentFriend,
-                               ChangeSuccess=True)
+                               other=True, alertmsg=msg)
+
     # print(friends)
     return render_template_index(friends=friends, own=own, msg=message, currentFriend=currentFriend)
 
@@ -81,6 +70,7 @@ def login():
         session['username'] = username
         session['status'] = True
         uid = user.getUid(username)
+        print("login：getuid",uid)
         session["id"] = uid
         return redirect("/index")
     else:
@@ -163,11 +153,11 @@ def searchUser():
     name = request.args.get("name")
     userI = User.User()
     users = userI.SearchUser(name)
-    print("搜索结果：",users)
+    print("搜索结果：", users)
     myid = session["id"]
     sex = userI.GetSex(myid)
     own = {"name": session["username"], "sex": sex, "id": myid}
-    return render_template("index.html",own=own,friends=users,msg=[], currentFriend={})
+    return render_template("index.html", own=own, friends=users, msg=[], currentFriend={})
 
 
 # 添加用户为好友
@@ -177,35 +167,56 @@ def addUser():
     user = User.User()
     res = user.AddUser(int(selfId), int(AddUserId))
     if res is True:
-        return index(other="AddSuccess")
+        return index(other=True, msg="添加成功")
     else:
-        return index(other="AddFalse")
+        return index(other=True, msg="添加失败")
+
 
 def ChangeUser():
     username = request.form["username"]
     sex = request.form["sex"]
-    passwd = request.form["oldPassword"]
-    newpasswd = request.form["newPassword"]
-    reNewPasswd = request.form["reNewPassword"]
-    if newpasswd !=reNewPasswd:
-        return index(other="密码不一致")
-    user = User.User()
-    res = user.ChangePasswd(myid=session["id"],old=passwd,new=newpasswd)
-    if res == "OldFalse":
-        return index(other="旧密码不正确")
-    elif res is False:
-        return index(other="changefalse")
-
-    if True:
-        return index(other="ChangeSuccess")
+    print("change: sex: ",sex)
+    if sex == "男":
+        sex = 2
+    elif sex == "女":
+        sex = 1
     else:
-        return index(other="ChaneFalse")
+        sex = 0
+    print("change: final sex",sex)
+
+    myid = int(session["id"])
+    passwd = request.form["oldPassword"]
+    newPasswd = request.form["newPassword"]
+    reNewPasswd = request.form["reNewPassword"]
+    # 修改密码
+    user = User.User()
+    if sex != 0:
+        user.ChangeSex(myid=myid,sex=sex)
+    if username != "":
+        if not user.ChangeUsername(myid=myid,username=username):
+            print("用户名修改失败")
+            return render_template("login.html",other=True,alertmsg="用户名修改失败")
+    if newPasswd != reNewPasswd:
+        return render_template("login.html",other=True,alertmsg="两次密码不正确")
+    if newPasswd != "":
+        res = user.ChangePasswd(myid=myid, old=passwd, new=newPasswd)
+        if res == "OldFalse":
+            print("OldFalse")
+            return render_template("login.html",other=True,alertmsg="旧密码不正确")
+        elif res is False:
+            print("修改失败")
+            return index(other=True, msg="修改失败")
+
+    session.clear()
+    return render_template("login.html",other=True,alertmsg="信息修改成功，请重新登录")
+
+
 def DeleteUser():
     DelteUserId = int(request.form["Id"])
     selfId = int(session["id"])
     user = User.User()
     res = user.DeleteUser(DelteUserId, selfId)
     if res:
-        return index(other="DeleteSuccess")
+        return index(other=True, msg="删除成功")
     else:
-        return index(other="DeleteFalse")
+        return index(other=True, msg="删除失败")

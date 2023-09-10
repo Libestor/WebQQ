@@ -19,25 +19,25 @@ class User:
 
         # 添加数据的sql语句
         self.getUsernameSql = "SELECT username FROM `user` WHERE id=%s"
-        self.getUidSql = "SELECT id FROM `user` WHERE username='%s'"
-        self.LoginSql = "SELECT * FROM login WHERE `username`='%s' AND `password`='%s'"
-        self.RegisterUserSql = "INSERT INTO `user`(`username`, `sex`,`email`) VALUES ('%s', '%s','%s')"
-        self.RegisterLoginSql = "INSERT INTO `login`(`username`, `password`) VALUES ('%s', '%s')"
-        self.CheckRegisterVaildSql = "SELECT * FROM user WHERE `username`='%s'"
+        self.getUidSql = "SELECT id FROM `user` WHERE username=%s"
+        self.LoginSql = "SELECT * FROM `login` WHERE `username`=%s AND `password`=%s"
+        self.RegisterUserSql = "INSERT INTO `user`(`username`, `sex`,`email`) VALUES (%s, %s,%s)"
+        self.RegisterLoginSql = "INSERT INTO `login`(`username`, `password`) VALUES (%s, %s)"
+        self.CheckRegisterVaildSql = "SELECT * FROM user WHERE `username`=%s"
         self.CheckUserSql = "SELECT * FROM `user` WHERE `id`=%s"
         self.getSexSql = "SELECT sex FROM user WHERE id=%s"
-        self.CheckFriendSql = "SELECT * FROM `relation` WHERE (`user1`='%s' AND `user2`='%s') OR (`user2`='%s' AND " \
-                              "`user1`='%s')"
-        self.AddUserSql = "INSERT INTO `relation`(`user1`, `user2`) VALUES('%s','%s')"
-        self.DeleteUserSql = "DELETE FROM `relation` WHERE (`user1` = '%s' AND user2 = '%s' )OR (`user2` = '%s' AND `user1` = '%s');"
-        self.GetFriendsSql = "SELECT id,username,sex FROM `user` WHERE `id` IN (SELECT user1 FROM `relation` WHERE `user2`='%s' UNION " \
-                             "SELECT user2 FROM `relation` WHERE `user1`='%s')"
-        self.SearchUserSql = "SELECT id,username,sex FROM `user` WHERE username LIKE '%s'"
-        self.CheckUsernameSql = "SELECT * FROM `user` WHERE username='%s'"
-        self.UpdateUsernameSql = "UPDATE `user` SET username = '%s' WHERE id = %s"
+        self.CheckFriendSql = "SELECT * FROM `relation` WHERE (`user1`=%s AND `user2`=%s) OR (`user2`=%s AND " \
+                              "`user1`=%s)"
+        self.AddUserSql = "INSERT INTO `relation`(`user1`, `user2`) VALUES(%s,%s)"
+        self.DeleteUserSql = "DELETE FROM `relation` WHERE (`user1` = %s AND user2 = %s )OR (`user2` = %s AND `user1` = %s);"
+        self.GetFriendsSql = "SELECT id,username,sex FROM `user` WHERE `id` IN (SELECT user1 FROM `relation` WHERE `user2`=%s UNION " \
+                             "SELECT user2 FROM `relation` WHERE `user1`=%s)"
+        self.SearchUserSql = "SELECT id,username,sex FROM `user` WHERE username LIKE %s"
+        self.CheckUsernameSql = "SELECT * FROM `user` WHERE username=%s"
+        self.UpdateUsernameSql = "UPDATE `user` SET username = %s WHERE id = %s"
         self.UpdateSexSql = "UPDATE `user` SET sex = %s WHERE id = %s"
-        self.UpdateLoginUsernameSql = "UPDATE `login` SET username = '%s' WHERE username = '%s'"
-        self.UpdatePasswordSql = "UPDATE `login` SET `password` = '%s' WHERE username = '%s'"
+        self.UpdateLoginUsernameSql = "UPDATE `login` SET username = %s WHERE username = %s"
+        self.UpdatePasswordSql = "UPDATE `login` SET `password` = %s WHERE username = %s"
 
     def __del__(self):
         self.db.close()
@@ -50,7 +50,7 @@ class User:
         id = cursor.fetchone()[0]
         return id
 
-    def GetSex(self, idnum:int):
+    def GetSex(self, idnum: int):
         cursor = self.db.cursor()
         cursor.execute(self.getSexSql, (idnum,))
         sex = cursor.fetchone()
@@ -156,7 +156,7 @@ class User:
             return []
 
     # 查询是否存在用户
-    def CheckUser(self, uid:int):
+    def CheckUser(self, uid: int):
         cursor = self.db.cursor()
         res = cursor.execute(self.CheckUserSql, (uid,))
         cursor.close()
@@ -218,52 +218,51 @@ class User:
             return False
 
     # 修改用户名
-    def ChangeUsername(self, myid:int, username):
+    def ChangeUsername(self, myid: int, username):
         # 检查是否合法
         if not self.CheckUsername(username):
             return False
         cursor = self.db.cursor()
-        # 修改总表
-        cursor.execute(self.UpdateUsernameSql,(username,myid))
-        # 修改登录表
         oldName = self.GetUsername(myid)
-        cursor.execute(self.UpdateLoginUsernameSql,(username,oldName))
+        # 修改总表
+        cursor.execute(self.UpdateUsernameSql, (username, myid))
+        # 修改登录表
+        cursor.execute(self.UpdateLoginUsernameSql, (username, oldName))
         self.db.commit()
         cursor.close()
         return True
 
-
     # 修改性别
-    def ChangeSex(self,sex:int,myid:int):
+    def ChangeSex(self, sex: int, myid: int):
         # 检查是否合法
         cursor = self.db.cursor()
-        cursor.execute(self.UpdateSexSql,(sex,myid))
+        cursor.execute(self.UpdateSexSql, (sex, myid))
         self.db.commit()
         cursor.close()
 
-    def GetUsername(self,myid:int):
+    def GetUsername(self, myid: int):
         cursor = self.db.cursor()
-        res = cursor.execute(self.getUsernameSql,(myid,))
-        if res == 0 :
+        res = cursor.execute(self.getUsernameSql, (myid,))
+        if res == 0:
             return False
         name = cursor.fetchone()[0]
         cursor.close()
         return name
 
     # 修改密码
-    def ChangePasswd(self,myid:int,old,new):
+    def ChangePasswd(self, myid: int, old, new):
         name = self.GetUsername(myid)
         # sql检测
         if not self.sqlInject(old) or not self.sqlInject(new):
             return False
         # 验证旧密码
-        if not self.CheckLogin(username=name,passwd=old):
+        if not self.CheckLogin(username=name, passwd=old):
             return "OldFalse"
         # 修改密码
         username = self.GetUsername(myid)
         passMd5 = self.getpassMd5(new)
         cursor = self.db.cursor()
-        cursor.execute(self.UpdatePasswordSql,(passMd5,username))
+        cursor.execute(self.UpdatePasswordSql, (passMd5, username))
         self.db.commit()
         cursor.close()
         return True

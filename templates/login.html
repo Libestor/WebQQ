@@ -16,6 +16,9 @@
     {% if LogoutSuccess == True %}
     <script> alert("退出成功") </script>
     {% endif %}
+    {% if other == True %}
+    <script> alert("{{ alertmsg }}") </script>
+    {% endif %}
     <div class="container">
         <div class="login-wrapper">
             <div class="header">登录</div>

@@ -10,9 +10,7 @@
     <script type="text/javascript" src="/static/js/index.js"></script>
 </head>
 <body>
-    {% if AddSuccess == True %}
-    <script> alert("添加成功") </script>
-    {% endif %}
+
     {% if AddSuccess == False %}
     <script> alert("添加失败") </script>
     {% endif %}
@@ -27,6 +25,9 @@
     {% endif %}
     {% if ChangeSuccess == True %}
     <script> alert("个人信息修改成功") </script>
+    {% endif %}
+    {% if other == True %}
+    <script> alert("{{ alertmsg }}") </script>
     {% endif %}
 <div class="main">
     <div class="top">
@@ -152,7 +153,7 @@
 {#修改用户信息#}
     <div id="ChangeInfoModal" class="modal">
       <div class="modal-content">
-        <span class="close" onclick="closeAddDialog()">&times;</span>
+        <span class="close" onclick="closeChangeDialog()">&times;</span>
         <h2 class="modal-h2">修改个人信息</h2>
         <form action="/ChangeUser" method="POST" class="modal-form">
             <h2>您的Uid为：{{ own.id }}</h2>
