@@ -79,7 +79,8 @@ def logout():
 
 
 # 搜索用户逻辑
-@app.route('/searchUser')
+@app.route('/searchUser',methods=["POST"],endpoint="searchUser")
+@login_require
 def searchUser():
     # 通过名字搜索
     return route.searchUser()
